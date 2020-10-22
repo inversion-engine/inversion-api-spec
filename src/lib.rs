@@ -6,6 +6,16 @@
 use derive_more::*;
 use indexmap::*;
 
+/// Re-exported dependencies.
+pub mod dependencies {
+    pub use ::derive_more;
+    pub use ::indexmap;
+    pub use ::nanoid;
+    pub use ::once_cell;
+    pub use ::serde;
+    pub use ::serde_json;
+}
+
 /// Newtype for a nanoid string.
 #[derive(
     Debug,
@@ -214,6 +224,9 @@ pub enum Type {
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct StructContent {
+    /// documentation
+    #[serde(skip_serializing_if = "Option::is_none")]
+    doc: Option<String>,
     /// The index of this struct item
     index: u32,
     /// The content type of this struct item
@@ -224,6 +237,9 @@ pub struct StructContent {
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Call {
+    /// documentation
+    #[serde(skip_serializing_if = "Option::is_none")]
+    doc: Option<String>,
     /// Which feature this call is defined in
     feature: String,
     /// The named type for the input to this call
@@ -236,109 +252,36 @@ pub struct Call {
 mod tests {
     use super::*;
 
-    const JSON_FIXTURE: &[u8] = br#"{
-  "inversionApiSpec": {
-    "id": "gwSMYpO3kr5yLvTNR3KR4",
-    "title": "Key Value Persistence",
-    "revision": 2,
-    "errorType": "structItem",
-    "unique": true,
-    "features": {
-      "set": {
-        "doc": "Set values in the KV store.",
-        "stablizedRevision": 0
-      },
-      "get": {
-        "doc": "Get values from the KV store.",
-        "stablizedRevision": 0
-      }
-    },
-    "unstableFeatures": {
-      "list": {
-        "doc": "List the values in the KV store."
-      }
-    },
-    "types": {
-      "intItem": {
-        "type": "i32",
-        "doc": "An integer item."
-      },
-      "stringItem": {
-        "type": "string"
-      },
-      "optionalItem": {
-        "type": "optional",
-        "content": {
-          "type": "string"
-        }
-      },
-      "arrayItem": {
-        "type": "array",
-        "content": {
-          "type": "string"
-        }
-      },
-      "structItem": {
-        "type": "struct",
-        "content": {
-          "intItem": {
-            "index": 0,
-            "content": {
-              "type": "i32",
-              "doc": "An integer item."
-            }
-          },
-          "stringItem": {
-            "index": 1,
-            "content": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "enumItem": {
-        "type": "enum",
-        "content": {
-          "intItem": {
-            "index": 0,
-            "content": {
-              "type": "i32",
-              "doc": "An integer item."
-            }
-          },
-          "stringItem": {
-            "index": 1,
-            "content": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "namedTypeItem": {
-        "type": "namedType",
-        "content": "enumItem"
-      }
-    },
-    "callsOut": {},
-    "callsIn": {
-      "set": {
-        "feature": "set",
-        "input": "structItem",
-        "output": "arrayItem"
-      }
+    /// Compile in a parsed static IApiSpecDoc
+    /// Not sure if we want to expose this or not...
+    macro_rules! include_iapi_spec_doc {
+        ($name:ident, $path:expr) => {
+            static $name: $crate::dependencies::once_cell::sync::Lazy<
+                $crate::IApiSpecDoc,
+            > = $crate::dependencies::once_cell::sync::Lazy::new(|| {
+                const DATA: &[u8] = ::std::include_bytes!($path);
+                $crate::dependencies::serde_json::from_slice(DATA).unwrap()
+            });
+        };
     }
-  }
-}"#;
+
+    const JSON_FIXTURE_SRC: &[u8] = include_bytes!("fixture_spec.json");
+    include_iapi_spec_doc!(JSON_FIXTURE, "fixture_spec.json");
 
     #[test]
     fn round_trip_encode_decode() {
-        let doc: IApiSpecDoc = serde_json::from_slice(JSON_FIXTURE).unwrap();
+        let doc: IApiSpecDoc =
+            serde_json::from_slice(JSON_FIXTURE_SRC).unwrap();
+        assert_eq!(*JSON_FIXTURE, doc);
         {
             let spec = &doc.inversion_api_spec;
             assert_eq!("gwSMYpO3kr5yLvTNR3KR4", spec.id.as_str());
         }
         let res = serde_json::to_string_pretty(&doc).unwrap();
-        assert_eq!(&String::from_utf8_lossy(JSON_FIXTURE), res.as_str());
+        assert_eq!(
+            String::from_utf8_lossy(JSON_FIXTURE_SRC).trim(),
+            res.as_str().trim()
+        );
         let doc2: IApiSpecDoc = serde_json::from_str(&res).unwrap();
         assert_eq!(doc, doc2);
     }

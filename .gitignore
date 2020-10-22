@@ -7,3 +7,6 @@
 
 #/target
 Cargo.lock
+.cargo-task/*
+!.cargo-task/bootstrap.ct.rs
+!.cargo-task/.git-pin

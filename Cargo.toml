@@ -1,6 +1,6 @@
 [package]
 name = "inversion_api_spec"
-version = "0.0.1"
+version = "0.0.1-alpha.1"
 authors = ["neonphog <neonphog@gmail.com>"]
 edition = "2018"
 
@@ -8,5 +8,6 @@ edition = "2018"
 derive_more = "0.99"
 indexmap = { version = "1", features = ["serde-1"] }
 nanoid = "0.3.0"
+once_cell = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }

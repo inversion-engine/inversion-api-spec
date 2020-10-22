@@ -1,0 +1,93 @@
+{
+  "inversionApiSpec": {
+    "id": "gwSMYpO3kr5yLvTNR3KR4",
+    "title": "Key Value Persistence",
+    "revision": 2,
+    "errorType": "structItem",
+    "unique": true,
+    "features": {
+      "set": {
+        "doc": "Set values in the KV store.",
+        "stablizedRevision": 0
+      },
+      "get": {
+        "doc": "Get values from the KV store.",
+        "stablizedRevision": 0
+      }
+    },
+    "unstableFeatures": {
+      "list": {
+        "doc": "List the values in the KV store."
+      }
+    },
+    "types": {
+      "intItem": {
+        "type": "i32",
+        "doc": "An integer item."
+      },
+      "stringItem": {
+        "type": "string"
+      },
+      "optionalItem": {
+        "type": "optional",
+        "content": {
+          "type": "string"
+        }
+      },
+      "arrayItem": {
+        "type": "array",
+        "content": {
+          "type": "string"
+        }
+      },
+      "structItem": {
+        "type": "struct",
+        "content": {
+          "intItem": {
+            "index": 0,
+            "content": {
+              "type": "i32",
+              "doc": "An integer item."
+            }
+          },
+          "stringItem": {
+            "index": 1,
+            "content": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "enumItem": {
+        "type": "enum",
+        "content": {
+          "intItem": {
+            "index": 0,
+            "content": {
+              "type": "i32",
+              "doc": "An integer item."
+            }
+          },
+          "stringItem": {
+            "index": 1,
+            "content": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "namedTypeItem": {
+        "type": "namedType",
+        "content": "enumItem"
+      }
+    },
+    "callsOut": {},
+    "callsIn": {
+      "set": {
+        "feature": "set",
+        "input": "structItem",
+        "output": "arrayItem"
+      }
+    }
+  }
+}

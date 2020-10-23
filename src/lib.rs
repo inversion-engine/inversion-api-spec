@@ -19,6 +19,7 @@ pub mod dependencies {
 /// Newtype for a nanoid string.
 #[derive(
     Debug,
+    Clone,
     Display,
     serde::Serialize,
     serde::Deserialize,
@@ -42,80 +43,88 @@ impl From<&str> for NanoId {
 }
 
 /// Doc wrapper is a heuristic for identifying the document type.
-#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct IApiSpecDoc {
     /// This provides the actual api spec.
-    inversion_api_spec: IApiSpec,
+    pub inversion_api_spec: IApiSpec,
+}
+
+impl IApiSpecDoc {
+    /// Parse json data into an IApiSpecDoc item.
+    pub fn parse(data: &[u8]) -> std::io::Result<Self> {
+        serde_json::from_slice(data)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+    }
 }
 
 /// The actual inversion api spec.
-#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct IApiSpec {
     /// nanoid spec identifier
-    id: NanoId,
+    pub id: NanoId,
 
     /// spec title
-    title: String,
+    pub title: String,
 
     /// spec revision
-    revision: u32,
+    pub revision: u32,
 
     /// If a call generates an error, this type will be returned.
-    error_type: String,
+    pub error_type: String,
 
     /// Some(true) if a broker should only allow one implementation.
     #[serde(skip_serializing_if = "Option::is_none")]
-    unique: Option<bool>,
+    pub unique: Option<bool>,
 
     /// Stablized features that *must* exist in implementations (by revision).
-    features: IndexMap<String, Feature>,
+    pub features: IndexMap<String, Feature>,
 
     /// Unstable Features:
     /// - apis may change between revisions
     /// - unstable features may be dropped
     /// - unstable features may be omitted by implementations
-    unstable_features: IndexMap<String, UnstableFeature>,
+    pub unstable_features: IndexMap<String, UnstableFeature>,
 
     /// Types to be used in error_type or input/output of calls.
-    types: IndexMap<String, Type>,
+    pub types: IndexMap<String, Type>,
 
     /// A dependant binding may make requests of its owner.
-    calls_out: IndexMap<String, Call>,
+    pub calls_out: IndexMap<String, Call>,
 
     /// An owner may bind an api dependency and make calls to it.
-    calls_in: IndexMap<String, Call>,
+    pub calls_in: IndexMap<String, Call>,
 }
 
 /// Stable Feature Definition
-#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Feature {
     /// documentation for feature
     #[serde(skip_serializing_if = "Option::is_none")]
-    doc: Option<String>,
+    pub doc: Option<String>,
 
     /// feature was stablized at this revision number
-    stablized_revision: u32,
+    pub stablized_revision: u32,
 
     /// this feature is deprecated, and may no longer be supported by implementors
     #[serde(skip_serializing_if = "Option::is_none")]
-    deprecated: Option<bool>,
+    pub deprecated: Option<bool>,
 }
 
 /// Unstable Feature Definition
-#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct UnstableFeature {
     /// documentation for feature
     #[serde(skip_serializing_if = "Option::is_none")]
-    doc: Option<String>,
+    pub doc: Option<String>,
 }
 
 /// The structured types allowed by inversion api.
 /// Note how you can use NamedType to refer to other types.
-#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum Type {
     /// If a call doesn't take any parameters, or doesn't return any data.
@@ -188,6 +197,17 @@ pub enum Type {
         /// content type for array items
         content: Box<Type>,
     },
+    /// List of defined subtypes
+    // "Tuple" values will be stored as a msgpack array.
+    // The individual values will be stored at the array index
+    // defined in StructContent
+    Tuple {
+        /// documentation
+        #[serde(skip_serializing_if = "Option::is_none")]
+        doc: Option<String>,
+        /// map of struct item types/names
+        content: Vec<StructContent>,
+    },
     /// Structured set of subtypes
     // "Struct" values will be stored as a msgpack array.
     // The individual values will be stored at the array index
@@ -221,31 +241,31 @@ pub enum Type {
 }
 
 /// Struct data definition
-#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct StructContent {
     /// documentation
     #[serde(skip_serializing_if = "Option::is_none")]
-    doc: Option<String>,
+    pub doc: Option<String>,
     /// The index of this struct item
-    index: u32,
+    pub index: u32,
     /// The content type of this struct item
-    content: Box<Type>,
+    pub content: Box<Type>,
 }
 
 /// Call data definition
-#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Call {
     /// documentation
     #[serde(skip_serializing_if = "Option::is_none")]
-    doc: Option<String>,
+    pub doc: Option<String>,
     /// Which feature this call is defined in
-    feature: String,
+    pub feature: String,
     /// The named type for the input to this call
-    input: String,
+    pub input: String,
     /// The named type for the output of this call
-    output: String,
+    pub output: String,
 }
 
 #[cfg(test)]

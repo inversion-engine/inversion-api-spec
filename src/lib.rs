@@ -240,13 +240,33 @@ pub enum Type {
     },
 }
 
+impl Type {
+    /// retrieve the doc entry for this type
+    pub fn doc(&self) -> &Option<String> {
+        match self {
+            Self::Null { doc, .. } => doc,
+            Self::Bool { doc, .. } => doc,
+            Self::I32 { doc, .. } => doc,
+            Self::U32 { doc, .. } => doc,
+            Self::I64 { doc, .. } => doc,
+            Self::U64 { doc, .. } => doc,
+            Self::F64 { doc, .. } => doc,
+            Self::Bytes { doc, .. } => doc,
+            Self::String { doc, .. } => doc,
+            Self::Optional { doc, .. } => doc,
+            Self::Array { doc, .. } => doc,
+            Self::Tuple { doc, .. } => doc,
+            Self::Struct { doc, .. } => doc,
+            Self::Enum { doc, .. } => doc,
+            Self::NamedType { doc, .. } => doc,
+        }
+    }
+}
+
 /// Struct data definition
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct StructContent {
-    /// documentation
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub doc: Option<String>,
     /// The index of this struct item
     pub index: u32,
     /// The content type of this struct item
